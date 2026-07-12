@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operator — Reading Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E1A;
+    --surface:#121A2B;
+    --surface-2:#17203399;
+    --line:#232C40;
+    --ink:#EDEFF6;
+    --ink-muted:#8B94AB;
+    --gold:#D4AF37;
+    --gold-dim:#7A6624;
+    --mindset:#6FD8EA;
+    --capital:#D4AF37;
+    --systems:#4FCC9B;
+    --influence:#E97CA0;
+    --rail:20px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #16203a55, transparent),
+      radial-gradient(900px 500px at 100% 0%, #14261f4d, transparent),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;}
+  .display{font-family:'Space Grotesk',system-ui,sans-serif;}
+
+  a, button{font-family:inherit;}
+  button{cursor:pointer;}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  .page{max-width:900px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;color:var(--gold);
+    text-transform:uppercase;margin:0 0 14px;
+  }
+  h1.title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;font-size:clamp(34px,7vw,56px);
+    margin:0 0 10px;letter-spacing:-0.01em;line-height:1.02;
+  }
+  .subtitle{color:var(--ink-muted);font-size:15px;line-height:1.55;max-width:56ch;margin:0 0 28px;}
+
+  .stat-row{
+    display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;
+    padding:20px;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,#101827aa,#0d1420aa);
+    margin-bottom:20px;
+  }
+  .stat-big{font-family:'Space Grotesk';font-weight:700;font-size:44px;line-height:1;}
+  .stat-big span{color:var(--gold);}
+  .stat-label{font-size:11px;letter-spacing:.12em;color:var(--ink-muted);text-transform:uppercase;margin-top:6px;}
+  .stat-bar-wrap{flex:1;min-width:180px;}
+  .bar-track{height:8px;border-radius:6px;background:#1B2438;overflow:hidden;border:1px solid var(--line);}
+  .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold-dim),var(--gold));
+    box-shadow:0 0 12px #D4AF3766; transition:width .5s ease;width:0%;}
+  .phase-pill{
+    font-size:11px;letter-spacing:.1em;color:var(--ink);
+    background:#1B2438;border:1px solid var(--line);border-radius:20px;
+    padding:6px 12px;white-space:nowrap;
+  }
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .kpi{
+    border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px;
+    background:var(--surface);transition:transform .15s ease, border-color .15s ease;
+  }
+  .kpi[data-active="true"]{border-color:var(--kpi-color);}
+  .kpi:hover{transform:translateY(-2px);}
+  .kpi-name{font-size:12px;font-weight:600;letter-spacing:.04em;}
+  .kpi-tag{font-size:11px;color:var(--ink-muted);margin:2px 0 10px;}
+  .kpi-count{font-family:'JetBrains Mono';font-size:13px;margin-bottom:6px;}
+  .kpi-track{height:5px;border-radius:4px;background:#1B2438;overflow:hidden;}
+  .kpi-fill{height:100%;width:0%;border-radius:4px;background:var(--kpi-color);transition:width .5s ease;}
+
+  /* ---------- TIMELINE ---------- */
+  .timeline-wrap{position:relative;}
+  .track{position:absolute;left:var(--rail);top:6px;bottom:6px;width:2px;background:var(--line);}
+  .track-fill{position:absolute;left:var(--rail);top:6px;width:2px;height:0%;
+    background:linear-gradient(180deg,var(--gold),var(--gold-dim));
+    box-shadow:0 0 10px #D4AF3788; transition:height .6s ease;}
+
+  .phase{display:flex;gap:0;margin-bottom:34px;position:relative;}
+  .node-col{width:calc(var(--rail)*2);flex-shrink:0;display:flex;justify-content:center;padding-top:4px;}
+  .node{
+    width:15px;height:15px;border-radius:50%;background:var(--bg);
+    border:2px solid var(--line);position:relative;z-index:2;
+    transition:all .3s ease;
+  }
+  .node[data-status="partial"]{border-color:var(--gold);}
+  .node[data-status="partial"]::after{
+    content:"";position:absolute;inset:3px;border-radius:50%;background:var(--gold);opacity:.7;
+  }
+  .node[data-status="complete"]{border-color:var(--gold);background:var(--gold);
+    box-shadow:0 0 14px #D4AF3799;}
+
+  .phase-body{flex:1;min-width:0;}
+  .phase-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding-top:2px;}
+  .phase-num{font-size:11px;letter-spacing:.12em;color:var(--gold);}
+  .phase-weeks{font-size:11px;letter-spacing:.06em;color:var(--ink-muted);}
+  .phase-count{margin-left:auto;font-size:11px;color:var(--ink-muted);}
+
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  @media (max-width:620px){.cards{grid-template-columns:1fr;} .kpis{grid-template-columns:repeat(2,1fr);}}
+
+  .card{
+    border:1px solid var(--line);border-radius:12px;background:var(--surface);
+    padding:16px 16px 14px;border-left:3px solid var(--cat-color);
+    transition:opacity .2s ease, transform .15s ease;
+  }
+  .card:hover{transform:translateY(-1px);}
+  .card.dimmed{opacity:.28;}
+  .cat-label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cat-color);margin-bottom:8px;font-weight:600;}
+  .book-title{font-family:'Space Grotesk';font-weight:600;font-size:16px;line-height:1.25;margin:0 0 2px;}
+  .book-author{font-size:12.5px;color:var(--ink-muted);margin:0 0 12px;}
+  .challenge-label{font-size:10px;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:4px;}
+  .challenge-text{font-size:13.5px;line-height:1.5;color:#D6DAE6;margin:0 0 14px;}
+  .toggle{
+    width:100%;border:1px solid var(--line);background:transparent;color:var(--ink-muted);
+    border-radius:8px;padding:9px 10px;font-size:12px;letter-spacing:.05em;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s ease;
+  }
+  .toggle:hover{border-color:var(--cat-color);color:var(--ink);}
+  .toggle[data-done="true"]{background:var(--cat-color);border-color:var(--cat-color);color:#0A0E1A;font-weight:600;}
+
+  /* ---------- FOOTER / PILLAR LEGEND ---------- */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 0;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-muted);}
+  .dot{width:8px;height:8px;border-radius:50%;}
+
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .foot-note{font-size:12px;color:var(--ink-muted);}
+  .reset-btn{background:none;border:none;color:var(--ink-muted);font-size:12px;text-decoration:underline;padding:0;}
+  .reset-btn:hover{color:var(--ink);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">12–13 Month Protocol · 40 Objectives</p>
+    <h1 class="title">OPERATOR</h1>
+    <p class="subtitle">A reading protocol for compounding growth. Four pillars, ten phases, one field challenge per objective. Check off a book once you've read it <em>and</em> run its challenge — that's what turns reading into an actual advantage.</p>
+
+    <div class="stat-row">
+      <div>
+        <div class="stat-big"><span id="doneCount">0</span>/40</div>
+        <div class="stat-label">Objectives complete</div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="bar-track"><div class="bar-fill" id="overallBar"></div></div>
+      </div>
+      <div class="phase-pill mono" id="currentPhasePill">PHASE 01 OF 10</div>
+    </div>
+
+    <div class="kpis" id="kpiStrip"></div>
+    <div class="legend" id="legend"></div>
+  </header>
+
+  <main class="timeline-wrap">
+    <div class="track"></div>
+    <div class="track-fill" id="trackFill"></div>
+    <div id="phases"></div>
+  </main>
+
+  <footer>
+    <span class="foot-note">Progress saves automatically in this browser.</span>
+    <button class="reset-btn" id="resetBtn">Reset all progress</button>
+  </footer>
+
+</div>
+
+<script>
+const PILLARS = {
+  mindset:  { name:"MINDSET",   tag:"How you think",     color:"var(--mindset)"  },
+  capital:  { name:"CAPITAL",   tag:"How you build wealth", color:"var(--capital)" },
+  systems:  { name:"SYSTEMS",   tag:"How you execute",   color:"var(--systems)"  },
+  influence:{ name:"INFLUENCE", tag:"How you lead people",  color:"var(--influence)" }
+};
+
+const PHASES = [
+{ weeks:"Weeks 1–4", books:{
+  mindset:{title:"Atomic Habits", author:"James Clear", challenge:"Design one tiny habit — two minutes or less — and track it daily for 7 days."},
+  capital:{title:"Rich Dad Poor Dad", author:"Robert Kiyosaki", challenge:"List your assets vs. liabilities, honestly. Which column is bigger?"},
+  systems:{title:"Eat That Frog", author:"Brian Tracy", challenge:"Tonight, name tomorrow's hardest task. Do it first thing in the morning."},
+  influence:{title:"How to Win Friends and Influence People", author:"Dale Carnegie", challenge:"Give one genuine, specific compliment a day, for a week."}
+}},
+{ weeks:"Weeks 5–8", books:{
+  mindset:{title:"The Alchemist", author:"Paulo Coelho", challenge:"Write down your 'Personal Legend' — the one goal you'd chase if failure were impossible."},
+  capital:{title:"The Richest Man in Babylon", author:"George Clason", challenge:"Save 10% of your next paycheck before spending anything else."},
+  systems:{title:"Tiny Habits", author:"BJ Fogg", challenge:"Attach one new tiny habit to a routine you already have."},
+  influence:{title:"The 5 Love Languages", author:"Gary Chapman", challenge:"Ask someone close to you what makes them feel most appreciated."}
+}},
+{ weeks:"Weeks 9–12", books:{
+  mindset:{title:"Ikigai", author:"García & Miralles", challenge:"Draw the 4-circle diagram — love, skill, world's need, pay — and find your overlap."},
+  capital:{title:"The Psychology of Money", author:"Morgan Housel", challenge:"Write down one money decision you made from emotion, not logic."},
+  systems:{title:"The 5 AM Club", author:"Robin Sharma", challenge:"Try one 5 AM wake-up this week. Note how the morning actually felt."},
+  influence:{title:"How to Talk to Anyone", author:"Leil Lowndes", challenge:"Open one conversation with a stranger using a genuine, open-ended question."}
+}},
+{ weeks:"Weeks 13–16", books:{
+  mindset:{title:"The Four Agreements", author:"Don Miguel Ruiz", challenge:"Pick one agreement. Apply it for a full week. Journal what shifts."},
+  capital:{title:"The Simple Path to Wealth", author:"JL Collins", challenge:"Calculate your current savings rate as a percentage of income."},
+  systems:{title:"Make Time", author:"Knapp & Zeratsky", challenge:"Pick one daily 'Highlight' each morning, for a week."},
+  influence:{title:"Never Split the Difference", author:"Chris Voss", challenge:"Use a calibrated question — one starting with 'How' or 'What' — in your next negotiation."}
+}},
+{ weeks:"Weeks 17–21", books:{
+  mindset:{title:"The Subtle Art of Not Giving a F*ck", author:"Mark Manson", challenge:"Name 3 things you've been giving unnecessary energy to. Drop one, this week."},
+  capital:{title:"I Will Teach You to Be Rich", author:"Ramit Sethi", challenge:"Set up, or review, one automated transfer to savings or investing."},
+  systems:{title:"The One Thing", author:"Gary Keller", challenge:"Each morning, ask: 'What's the ONE thing that makes everything else easier?'"},
+  influence:{title:"Nonviolent Communication", author:"Marshall Rosenberg", challenge:"Rephrase one complaint as: observation + feeling + need."}
+}},
+{ weeks:"Weeks 22–26", books:{
+  mindset:{title:"Mindset", author:"Carol Dweck", challenge:"Catch one 'I'm not good at X' this week. Rewrite it as '...not good at X yet.'"},
+  capital:{title:"The Total Money Makeover", author:"Dave Ramsey", challenge:"List every debt, smallest to largest — your snowball order."},
+  systems:{title:"The Power of Habit", author:"Charles Duhigg", challenge:"Map the cue → routine → reward loop of one habit you want to change."},
+  influence:{title:"Quiet", author:"Susan Cain", challenge:"Notice one place you recharge best alone. Protect that time on purpose."}
+}},
+{ weeks:"Weeks 27–31", books:{
+  mindset:{title:"Grit", author:"Angela Duckworth", challenge:"Define your one long-term goal, and map how this week's tasks ladder up to it."},
+  capital:{title:"The Automatic Millionaire", author:"David Bach", challenge:"Automate one bill or saving you're still doing by hand."},
+  systems:{title:"Indistractable", author:"Nir Eyal", challenge:"Turn off every non-essential notification for 48 hours."},
+  influence:{title:"Influence", author:"Robert Cialdini", challenge:"Spot one persuasion tactic — scarcity, social proof — used on you this week."}
+}},
+{ weeks:"Weeks 32–37", books:{
+  mindset:{title:"Can't Hurt Me", author:"David Goggins", challenge:"Do one hard physical thing this week that you'd normally avoid."},
+  capital:{title:"Your Money or Your Life", author:"Vicki Robin", challenge:"Calculate your real hourly wage — income ÷ real hours spent, commute included."},
+  systems:{title:"Essentialism", author:"Greg McKeown", challenge:"Say no to one nonessential request this week."},
+  influence:{title:"Difficult Conversations", author:"Stone, Patton & Heen", challenge:"Have the conversation you've been avoiding. Use 'I' statements."}
+}},
+{ weeks:"Weeks 38–43", books:{
+  mindset:{title:"The 7 Habits of Highly Effective People", author:"Stephen Covey", challenge:"Write your personal mission statement — three sentences, no more."},
+  capital:{title:"The Millionaire Next Door", author:"Stanley & Danko", challenge:"Track every expense for 3 days. Spot one status purchase you didn't need."},
+  systems:{title:"Getting Things Done", author:"David Allen", challenge:"Brain-dump every open task in your head onto one list."},
+  influence:{title:"Crucial Conversations", author:"Patterson et al.", challenge:"Before your next tense talk, define what you want for you, them, and the relationship."}
+}},
+{ weeks:"Weeks 44–52", books:{
+  mindset:{title:"Man's Search for Meaning", author:"Viktor Frankl", challenge:"Write down what gives your work meaning, independent of the outcome."},
+  capital:{title:"Secrets of the Millionaire Mind", author:"T. Harv Eker", challenge:"Write your 'money blueprint' — what you absorbed about money growing up."},
+  systems:{title:"Deep Work", author:"Cal Newport", challenge:"Block 90 minutes of phone-free, single-task focus, 3 times this week."},
+  influence:{title:"Emotional Intelligence", author:"Daniel Goleman", challenge:"Next time you're upset, name the exact emotion — not 'bad', but angry, disappointed, anxious."}
+}}
+];
+
+const STORAGE_KEY = "operator-progress-v1";
+let completed = {};
+let activeFilter = null;
+
+function bookId(phaseIdx, pillarKey){ return "p" + phaseIdx + "-" + pillarKey; }
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){ completed = JSON.parse(res.value); }
+  }catch(e){ completed = {}; }
+  render();
+}
+
+async function saveProgress(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(completed), false); }
+  catch(e){ /* best effort */ }
+}
+
+function toggleBook(id){
+  completed[id] = !completed[id];
+  saveProgress();
+  render();
+}
+
+async function resetAll(){
+  completed = {};
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(completed), false); }catch(e){}
+  render();
+}
+
+function buildLegend(){
+  const el = document.getElementById('legend');
+  el.innerHTML = Object.entries(PILLARS).map(([key,p])=>
+    `<span class="legend-item"><span class="dot" style="background:${p.color}"></span>${p.name} — ${p.tag}</span>`
+  ).join('');
+}
+
+function render(){
+  const phasesEl = document.getElementById('phases');
+  let totalDone = 0;
+  const pillarDone = {mindset:0,capital:0,systems:0,influence:0};
+  let firstIncompletePhase = null;
+
+  let html = '';
+  PHASES.forEach((phase, pIdx)=>{
+    let phaseDone = 0;
+    let cardsHtml = '';
+    Object.entries(PILLARS).forEach(([key,pillar])=>{
+      const book = phase.books[key];
+      const id = bookId(pIdx, key);
+      const done = !!completed[id];
+      if(done){ phaseDone++; totalDone++; pillarDone[key]++; }
+      const dimmed = activeFilter && activeFilter!==key ? ' dimmed' : '';
+      cardsHtml += `
+        <div class="card${dimmed}" style="--cat-color:${pillar.color}">
+          <div class="cat-label">${pillar.name}</div>
+          <p class="book-title">${book.title}</p>
+          <p class="book-author">${book.author}</p>
+          <div class="challenge-label mono">FIELD CHALLENGE</div>
+          <p class="challenge-text">${book.challenge}</p>
+          <button class="toggle" data-done="${done}" onclick="toggleBook('${id}')">
+            ${done ? '✓ COMPLETE' : 'MARK COMPLETE'}
+          </button>
+        </div>`;
+    });
+
+    let status = 'pending';
+    if(phaseDone===4) status='complete';
+    else if(phaseDone>0) status='partial';
+    if(firstIncompletePhase===null && phaseDone<4) firstIncompletePhase = pIdx;
+
+    html += `
+      <div class="phase">
+        <div class="node-col"><div class="node" data-status="${status}"></div></div>
+        <div class="phase-body">
+          <div class="phase-head">
+            <span class="phase-num mono">PHASE ${String(pIdx+1).padStart(2,'0')}</span>
+            <span class="phase-weeks mono">${phase.weeks}</span>
+            <span class="phase-count mono">${phaseDone}/4</span>
+          </div>
+          <div class="cards">${cardsHtml}</div>
+        </div>
+      </div>`;
+  });
+  phasesEl.innerHTML = html;
+
+  // header stats
+  document.getElementById('doneCount').textContent = totalDone;
+  document.getElementById('overallBar').style.width = (totalDone/40*100) + '%';
+  document.getElementById('trackFill').style.height = (totalDone/40*100) + '%';
+  const currentPhase = firstIncompletePhase===null ? 10 : firstIncompletePhase+1;
+  document.getElementById('currentPhasePill').textContent = 'PHASE ' + String(currentPhase).padStart(2,'0') + ' OF 10';
+
+  // KPI strip
+  const kpiEl = document.getElementById('kpiStrip');
+  kpiEl.innerHTML = Object.entries(PILLARS).map(([key,p])=>{
+    const count = pillarDone[key];
+    const active = activeFilter===key;
+    return `
+      <button class="kpi" data-active="${active}" style="--kpi-color:${p.color};text-align:left;" onclick="setFilter('${key}')">
+        <div class="kpi-name" style="color:${p.color}">${p.name}</div>
+        <div class="kpi-tag">${p.tag}</div>
+        <div class="kpi-count mono">${count}/10</div>
+        <div class="kpi-track"><div class="kpi-fill" style="width:${count*10}%"></div></div>
+      </button>`;
+  }).join('');
+}
+
+function setFilter(key){
+  activeFilter = activeFilter===key ? null : key;
+  render();
+}
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(confirm('Reset all progress? This clears every checked book.')) resetAll();
+});
+
+buildLegend();
+loadProgress();
+</script>
+</body>
+</html>
